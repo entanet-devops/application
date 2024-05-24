@@ -55,6 +55,7 @@
       when: run_composer.stat.exists
 
     - include: testing.yml
+    - include: behat.yml
     - include: env.yml
 
     - name: Check if npm package.json exists
@@ -73,8 +74,6 @@
       args:
         chdir: "{{ app_directory }}"
       when: npm_install and run_npm.stat.exists
-
-    - include: behat.yml
 
     - name: Composer install to remove dev dependecies.
       composer:
