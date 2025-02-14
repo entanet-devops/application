@@ -29,6 +29,9 @@
     group: "{{ app_group }}"
     mode: '0755'
 
+- name: Set custom php ini values
+  include_tasks: php.yml
+
 - name: Check if composer.json exists
   stat:
     path: "{{ app_directory }}/composer.json"
