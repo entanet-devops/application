@@ -1,8 +1,18 @@
+- name: Detect PHP version
+  shell: "php -r 'echo PHP_MAJOR_VERSION.\".\".PHP_MINOR_VERSION;';"
+  register: actual_php_version
+  changed_when: false
+
 - name: Set PHP fpm ini variables
   ini_file:
-    path: "/etc/php/{{php_version}}/fpm/php.ini"
+    path: "/etc/php/{{actual_php_version}}/fpm/php.ini"
     section: PHP
     option: "{{ item.key }}"
     value: "{{ item.value }}"
   with_dict: "{{ php_ini_values }}"
   when: php_ini_values | length > 0
+
+- name: Restart PHP-FPM
+  service:
+    name: "php{{actual_php_version}}-fpm"
+    state: restarted
