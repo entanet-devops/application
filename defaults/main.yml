@@ -6,8 +6,8 @@ laravel_app: true
 npm_install: true
 delete_env_after_test: true
 
-bitbucket_consumer_key: ""
-bitbucket_consumer_secret: ""
+bitbucket_consumer_key: "{{ lookup('aws_ssm', '/general/bitbucket/bitbucket_client_id') }}"
+bitbucket_consumer_secret: "{{ lookup('aws_ssm', '/general/bitbucket/bitbucket_client_secret') }}"
 
 minimum_laravel_version: "5.0.0"
 minimum_craftcms_version: "3.0.0"
