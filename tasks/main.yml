@@ -66,6 +66,20 @@
         path: "{{ app_directory }}/package.json"
       register: run_npm
 
+    - name: Set bitbucket auth for private npm packages.
+      copy:
+        dest: "{{ app_directory }}/.npmrc"
+        content: |
+          //npm.pkg.bitbucket.org/:username={{ bitbucket_consumer_key }}
+          //npm.pkg.bitbucket.org/:_password={{ bitbucket_consumer_secret | b64encode }}
+          //npm.pkg.bitbucket.org/:email=npm@cityfibre.com
+          always-auth=true
+      when:
+        - npm_install
+        - run_npm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+
     - name: npm install
       command: "npm install"
       args:
@@ -77,6 +91,12 @@
       args:
         chdir: "{{ app_directory }}"
       when: npm_install and run_npm.stat.exists
+
+    - name: Remove npm auth file after install
+      file:
+        path: "{{ app_directory }}/.npmrc"
+        state: absent
+      when: npm_install and run_npm.stat.exists  
 
     - name: Composer install to remove dev dependecies.
       composer:
