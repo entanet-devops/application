@@ -83,7 +83,7 @@
       when:
         - npm_install
         - run_npm.stat.exists
-        - not run_pnpm.stat.exist
+        - not run_pnpm.stat.exists
         - bitbucket_consumer_key != ""
         - bitbucket_consumer_secret != ""
 
