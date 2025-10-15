@@ -66,17 +66,75 @@
         path: "{{ app_directory }}/package.json"
       register: run_npm
 
+    - name: Check if pnpm-lock.yaml exists
+      stat:
+        path: "{{ app_directory }}/pnpm-lock.yaml"
+      register: run_pnpm
+
+    - name: Set bitbucket auth for private npm packages.
+      copy:
+        dest: "{{ app_directory }}/.npmrc"
+        content: |
+          @cityfibre:registry=https://npm.pkg.bitbucket.org
+          //npm.pkg.bitbucket.org/:username={{ bitbucket_consumer_key }}
+          //npm.pkg.bitbucket.org/:_password={{ bitbucket_consumer_secret | b64encode }}
+          //npm.pkg.bitbucket.org/:email=npm@cityfibre.com
+          always-auth=true
+      when:
+        - npm_install
+        - run_npm.stat.exists
+        - not run_pnpm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+
     - name: npm install
       command: "npm install"
       args:
         chdir: "{{ app_directory }}"
-      when: npm_install and run_npm.stat.exists
+      when: npm_install and run_npm.stat.exists and not run_pnpm.stat.exists
 
     - name: npm run prod
       command: "npm run prod"
       args:
         chdir: "{{ app_directory }}"
-      when: npm_install and run_npm.stat.exists
+      when: npm_install and run_npm.stat.exists and not run_pnpm.stat.exists
+
+    - name: Configure pnpm authentication for private Bitbucket packages
+      copy:
+        dest: "{{ app_directory }}/.npmrc"
+        content: |
+          @cityfibre:registry=https://npm.pkg.bitbucket.org
+          //npm.pkg.bitbucket.org/:username={{ bitbucket_consumer_key }}
+          //npm.pkg.bitbucket.org/:_password={{ bitbucket_consumer_secret | b64encode }}
+          //npm.pkg.bitbucket.org/:email=npm@cityfibre.com
+          always-auth=true
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+
+    - name: pnpm install
+      command: pnpm install
+      args:
+        chdir: "{{ app_directory }}"
+      environment:
+        NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
+      when: npm_install and run_pnpm.stat.exists
+
+    - name: pnpm run build
+      command: pnpm run build
+      args:
+        chdir: "{{ app_directory }}"
+      environment:
+        NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
+      when: npm_install and run_pnpm.stat.exists
+
+    - name: Remove auth file after install
+      file:
+        path: "{{ app_directory }}/.npmrc"
+        state: absent
+      when: npm_install and (run_npm.stat.exists or run_pnpm.stat.exists)  
 
     - name: Composer install to remove dev dependecies.
       composer:
