@@ -8,13 +8,13 @@
 
 - name: Check for Laravel framework
   set_fact:
-    fact_laravel_version: "{{ jsondata | json_query(jmesquery) | default([]) }}"
+    fact_laravel_version: "{{ jsondata | json_query(jmesquery) }}"
   vars:
     jmesquery: 'require."laravel/framework"'
 
 - name: Check for Craft CMS framework
   set_fact:
-    fact_craftcms_version: "{{ jsondata | json_query(jmesquery) | default([]) }}"
+    fact_craftcms_version: "{{ jsondata | json_query(jmesquery) }}"
   vars:
     jmesquery: 'require."craftcms/cms"'
 
@@ -25,8 +25,8 @@
 
 - name: Include Laravel tasks
   include_tasks: laravel.yml
-  when: fact_laravel_version | length > 0
+  when: fact_laravel_version | default([]) | length > 0
 
 - name: Include Craft CMS tasks
   include_tasks: craftcms.yml
-  when: fact_craftcms_version | length > 0
+  when: fact_craftcms_version | default([]) | length > 0
