@@ -146,17 +146,17 @@
       shell: 'php craft setup/security-key'
       args:
         chdir: "{{ app_directory }}"
-      when: fact_craftcms_version | length > 0 and app_env.APP_KEY is not defined
+      when: (fact_craftcms_version | default([], true)) | length > 0 and app_env.APP_KEY is not defined
 
     - name: Artisan Key Generate.
       shell: 'php artisan key:generate'
       args:
         chdir: "{{ app_directory }}"
-      when: fact_laravel_version | length > 0 and app_env.APP_KEY is not defined
+      when: (fact_laravel_version | default([], true)) | length > 0 and app_env.APP_KEY is not defined
 
     - name: Configure laravel cronjob
       cron:
         name: Laravel Cron
         user: "{{ app_user }}"
         job: "cd {{ app_directory }} && php artisan schedule:run >> /dev/null 2>&1"
-      when: fact_laravel_version | length > 0
+      when: (fact_laravel_version | default([], true)) | length > 0
