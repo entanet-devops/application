@@ -8,13 +8,13 @@
 
 - name: Check for Laravel framework
   set_fact:
-    fact_laravel_version: "{{ jsondata | json_query(jmesquery) }}"
+    fact_laravel_version: "{{ jsondata | json_query(jmesquery) | default([]) }}"
   vars:
     jmesquery: 'require."laravel/framework"'
 
 - name: Check for Craft CMS framework
   set_fact:
-    fact_craftcms_version: "{{ jsondata | json_query(jmesquery) }}"
+    fact_craftcms_version: "{{ jsondata | json_query(jmesquery) | default([]) }}"
   vars:
     jmesquery: 'require."craftcms/cms"'
 
