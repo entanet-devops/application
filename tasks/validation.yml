@@ -21,7 +21,7 @@
 - name: Check for unknown framework
   fail:
     msg: Could not recognise PHP framework.
-  when: fact_laravel_version | length == 0 and fact_craftcms_version | length == 0
+  when: (fact_laravel_version | length == 0 and fact_craftcms_version | default([], true)) | length == 0
 
 - name: Include Laravel tasks
   include_tasks: laravel.yml
