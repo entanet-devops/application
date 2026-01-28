@@ -115,7 +115,7 @@
         - bitbucket_consumer_secret != ""
 
     - name: pnpm install
-      command: pnpm install
+      command: 'pnpm install'
       args:
         chdir: "{{ app_directory }}"
       environment:
