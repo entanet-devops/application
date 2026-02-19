@@ -117,6 +117,7 @@
     - name: pnpm install
       npm: 
         name: pnpm
+        global: true
       args:
         chdir: "{{ app_directory }}"
       environment:
