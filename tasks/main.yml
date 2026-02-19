@@ -115,8 +115,7 @@
         - bitbucket_consumer_secret != ""
 
     - name: pnpm install
-      npm:
-          name: pnpm
+      command: "corepack use pnpm@latest"
       args:
         chdir: "{{ app_directory }}"
       environment:
