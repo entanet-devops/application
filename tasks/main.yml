@@ -113,11 +113,17 @@
         - run_pnpm.stat.exists
         - bitbucket_consumer_key != ""
         - bitbucket_consumer_secret != ""
-
-    - name: pnpm install
-      npm: 
+    
+    - name: Install pnpm globally
+      npm:
         name: pnpm
         global: true
+      environment:
+        NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
+      when: npm_install and run_pnpm.stat.exists
+    
+    - name: Run pnpm install in app dir
+      command: pnpm install
       args:
         chdir: "{{ app_directory }}"
       environment:
