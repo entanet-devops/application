@@ -128,6 +128,7 @@
         pnpm_platform: "linux"
         pnpm_arch: "x64"
         pnpm_archive_url: "https://github.com/pnpm/pnpm/releases/download/v{{ pnpm_registry_response.json['dist-tags']['latest-10'] }}/pnpm-linux-x64"
+        pnpm_bin: "/home/ubuntu/.local/share/pnpm/pnpm"
       when: npm_install and run_pnpm.stat.exists
 
     - name: "Downloading pnpm binaries {{ pnpm_latest_10_version }}"
@@ -141,16 +142,24 @@
       command:
         cmd: "/tmp/pnpm setup --force"
       environment:
-        SHELL: "{{ ansible_env.SHELL }}"
+        SHELL: "{{ ansible_facts['env']['SHELL'] }}"
       when: npm_install and run_pnpm.stat.exists
-    
+
     - name: Run pnpm install in app dir
-      command: pnpm install
-      args:
-        chdir: "{{ app_directory }}"
+      ansible.builtin.command:
+      cmd: "{{ pnpm_bin }} install"
+      chdir: "{{ app_directory }}"
       environment:
         NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
       when: npm_install and run_pnpm.stat.exists
+    
+    # - name: Run pnpm install in app dir
+    #   command: pnpm install
+    #   args:
+    #     chdir: "{{ app_directory }}"
+    #   environment:
+    #     NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
+    #   when: npm_install and run_pnpm.stat.exists
 
     - name: pnpm run build
       command: pnpm run build
