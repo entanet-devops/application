@@ -147,20 +147,12 @@
 
     - name: Run pnpm install in app dir
       ansible.builtin.command:
-      cmd: "{{ pnpm_bin }} install"
-      chdir: "{{ app_directory }}"
+        cmd: "{{ pnpm_bin }} install"
+        chdir: "{{ app_directory }}"
       environment:
         NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
       when: npm_install and run_pnpm.stat.exists
     
-    # - name: Run pnpm install in app dir
-    #   command: pnpm install
-    #   args:
-    #     chdir: "{{ app_directory }}"
-    #   environment:
-    #     NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
-    #   when: npm_install and run_pnpm.stat.exists
-
     - name: pnpm run build
       command: pnpm run build
       args:
