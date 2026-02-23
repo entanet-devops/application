@@ -78,11 +78,6 @@
         path: "{{ app_directory }}/package.json"
       register: run_npm
 
-    - name: Check if pnpm-lock.yaml exists
-      stat:
-        path: "{{ app_directory }}/pnpm-lock.yaml"
-      register: run_pnpm
-
     - name: Set bitbucket auth for private npm packages.
       copy:
         dest: "{{ app_directory }}/.npmrc"
@@ -126,7 +121,6 @@
         - bitbucket_consumer_key != ""
         - bitbucket_consumer_secret != ""
         
-    
     - name: Run pnpm install in app dir
       command: pnpm install
       args:
