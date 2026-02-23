@@ -40,6 +40,18 @@
 - name: Validate PHP framework
   include_tasks: validation.yml
 
+- name: Check if pnpm-lock.yaml exists
+  stat:
+    path: "{{ app_directory }}/pnpm-lock.yaml"
+  register: run_pnpm
+
+- name: Ensure pnpm is installed globally
+  npm:
+    name: pnpm
+    global: yes
+    state: present
+  when: run_pnpm.stat.exists
+
 - become: true
   become_user: "{{ app_user }}"
   block:
@@ -113,46 +125,16 @@
         - run_pnpm.stat.exists
         - bitbucket_consumer_key != ""
         - bitbucket_consumer_secret != ""
-
-    - name: Get latest-10 version from @pnpm/exe dist-tags
-      uri:
-        url: "https://registry.npmjs.org/@pnpm/exe"
-        method: GET
-        return_content: true
-      register: pnpm_registry_response
-      when: npm_install and run_pnpm.stat.exists
-
-    - name: Set pnpm latest-10 version fact
-      set_fact:
-        pnpm_latest_10_version: "{{ pnpm_registry_response.json['dist-tags']['latest-10'] }}"
-        pnpm_platform: "linux"
-        pnpm_arch: "x64"
-        pnpm_archive_url: "https://github.com/pnpm/pnpm/releases/download/v{{ pnpm_registry_response.json['dist-tags']['latest-10'] }}/pnpm-linux-x64"
-        pnpm_bin: "/home/ubuntu/.local/share/pnpm/pnpm"
-      when: npm_install and run_pnpm.stat.exists
-
-    - name: "Downloading pnpm binaries {{ pnpm_latest_10_version }}"
-      get_url:
-        url: "{{ pnpm_archive_url }}"
-        dest: "/tmp/pnpm"
-        mode: '0755'
-      when: npm_install and run_pnpm.stat.exists
-
-    - name: Run pnpm setup
-      command:
-        cmd: "/tmp/pnpm setup --force"
-      environment:
-        SHELL: "{{ ansible_facts['env']['SHELL'] }}"
-      when: npm_install and run_pnpm.stat.exists
-
+        
+    
     - name: Run pnpm install in app dir
-      ansible.builtin.command:
-        cmd: "{{ pnpm_bin }} install"
+      command: pnpm install
+      args:
         chdir: "{{ app_directory }}"
       environment:
         NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
       when: npm_install and run_pnpm.stat.exists
-    
+
     - name: pnpm run build
       command: pnpm run build
       args:
