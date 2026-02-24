@@ -120,6 +120,18 @@
         - run_pnpm.stat.exists
         - bitbucket_consumer_key != ""
         - bitbucket_consumer_secret != ""
+
+    - name: Configure git credentials for private Bitbucket repos
+      copy:
+        dest: "{{ app_directory }}/.gitconfig"
+        content: |
+          [url "https://{{ bitbucket_consumer_key }}:{{ bitbucket_consumer_secret }}@bitbucket.org"]
+              insteadOf = https://bitbucket.org
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
         
     - name: Run pnpm install in app dir
       command: pnpm install
