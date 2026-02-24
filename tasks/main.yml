@@ -138,7 +138,9 @@
       args:
         chdir: "{{ app_directory }}"
       environment:
+        GIT_CONFIG: "{{ app_directory }}/.gitconfig"
         NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
+        
       when: npm_install and run_pnpm.stat.exists
 
     - name: pnpm run build
