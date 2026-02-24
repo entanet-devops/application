@@ -125,7 +125,22 @@
       copy:
         dest: "{{ app_directory }}/.gitconfig"
         content: |
-          [url "https://{{ bitbucket_consumer_key }}:{{ bitbucket_consumer_secret }}@bitbucket.org"]
+          [url "https://{{ bitbucket_consumer_key }}:{{ bitbucket_consumer_secret | urlencode }}@bitbucket.org"]
+              insteadOf = https://bitbucket.org
+        mode: '0600'
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+
+    - name: Configure git to use credential store
+      copy:
+        dest: "{{ app_directory }}/.gitconfig"
+        content: |
+          [credential]
+              helper = store
+          [url "https://bitbucket.org"]
               insteadOf = https://bitbucket.org
       when:
         - npm_install
@@ -138,8 +153,8 @@
       args:
         chdir: "{{ app_directory }}"
       environment:
-        GIT_CONFIG: "{{ app_directory }}/.gitconfig"
         NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
+        GIT_TERMINAL_PROMPT: "0"
         
       when: npm_install and run_pnpm.stat.exists
 
