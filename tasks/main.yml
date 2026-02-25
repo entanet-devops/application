@@ -120,16 +120,46 @@
         - run_pnpm.stat.exists
         - bitbucket_consumer_key != ""
         - bitbucket_consumer_secret != ""
-        
+
+    - name: Get Bitbucket OAuth token
+      uri:
+        url: "https://bitbucket.org/site/oauth2/access_token"
+        method: POST
+        url_username: "{{ bitbucket_consumer_key }}"
+        url_password: "{{ bitbucket_consumer_secret }}"
+        force_basic_auth: yes
+        body: "grant_type=client_credentials"
+        body_format: form-urlencoded
+      register: bitbucket_token
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+  
+    - name: Configure git credentials for private Bitbucket repos
+      copy:
+        dest: "{{ app_directory }}/.gitconfig"
+        content: |
+          [url "https://x-token-auth:{{ bitbucket_token.json.access_token }}@bitbucket.org"]
+              insteadOf = https://bitbucket.org
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+      
     - name: Run pnpm install in app dir
       command: pnpm install
       args:
         chdir: "{{ app_directory }}"
       environment:
-        NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
+        GIT_CONFIG: "{{ app_directory }}/.gitconfig"
         GIT_TERMINAL_PROMPT: "0"
-        
-      when: npm_install and run_pnpm.stat.exists
+        NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
 
     - name: pnpm run build
       command: pnpm run build
