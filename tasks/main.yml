@@ -155,7 +155,6 @@
         chdir: "{{ app_directory }}"
       environment:
         GIT_CONFIG_GLOBAL: "{{ app_directory }}/.gitconfig"
-        GIT_TERMINAL_PROMPT: "0"
         NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
       when:
         - npm_install
