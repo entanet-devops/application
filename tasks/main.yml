@@ -20,12 +20,6 @@
     group: "{{ app_group }}"
     recurse: yes
 
-- name: Check if pnpm-lock.yaml exists
-  stat:
-    path: "{{ app_directory }}/pnpm-lock.yaml"
-  register: run_pnpm
-  
-    
 - name: Chown npm cache directory
   file:
     path: /var/www/
@@ -34,6 +28,16 @@
     owner: "{{ app_user }}"
     group: "{{ app_group }}"
     mode: '0755'
+
+- name: Check if pnpm-lock.yaml exists
+  stat:
+    path: "{{ app_directory }}/pnpm-lock.yaml"
+  register: run_pnpm
+
+- name: Check if npm package.json exists
+  stat:
+    path: "{{ app_directory }}/package.json"
+  register: run_npm
 
 - name: Set custom php ini values
   include_tasks: php.yml
@@ -74,11 +78,6 @@
     - include_tasks: testing.yml
     - include_tasks: behat.yml
     - include_tasks: env.yml
-
-    - name: Check if npm package.json exists
-      stat:
-        path: "{{ app_directory }}/package.json"
-      register: run_npm
 
     - name: Set bitbucket auth for private npm packages.
       copy:
