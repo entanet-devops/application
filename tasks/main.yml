@@ -1,3 +1,12 @@
+- name: Install ACL package
+  apt:
+    name: acl
+    state: present
+
+- name: Install application.
+  apt: 
+    deb: "{{ app_deb_package }}"
+
 - name: Check if pnpm-lock.yaml exists
   stat:
     path: "{{ app_directory }}/pnpm-lock.yaml"
@@ -7,15 +16,6 @@
   stat:
     path: "{{ app_directory }}/package.json"
   register: run_npm
-
-- name: Install ACL package
-  apt:
-    name: acl
-    state: present
-
-- name: Install application.
-  apt: 
-    deb: "{{ app_deb_package }}"
 
 - name: Create app user.
   user:
