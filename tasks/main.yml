@@ -20,6 +20,12 @@
     group: "{{ app_group }}"
     recurse: yes
 
+- name: Check if pnpm-lock.yaml exists
+  stat:
+    path: "{{ app_directory }}/pnpm-lock.yaml"
+  register: run_pnpm
+  
+    
 - name: Chown npm cache directory
   file:
     path: /var/www/
@@ -40,11 +46,6 @@
 - name: Validate PHP framework
   include_tasks: validation.yml
 
-- name: Check if pnpm-lock.yaml exists
-  stat:
-    path: "{{ app_directory }}/pnpm-lock.yaml"
-  register: run_pnpm
-
 - name: Ensure pnpm is installed globally
   npm:
     name: pnpm
@@ -55,12 +56,6 @@
 - become: true
   become_user: "{{ app_user }}"
   block:
-    - name: Set bitbucket auth for private composer packages.
-      shell: "composer config --global --auth bitbucket-oauth.bitbucket.org {{ bitbucket_consumer_key }} {{ bitbucket_consumer_secret }}"
-      when:
-        - bitbucket_consumer_key != ""
-        - bitbucket_consumer_secret != ""
-        - run_composer.stat.exists
 
     - name: Composer Install.
       composer:
@@ -68,6 +63,13 @@
         no_dev: no
         working_dir: "{{ app_directory }}"
       when: run_composer.stat.exists
+      
+    - name: Set bitbucket auth for private composer packages.
+      shell: "composer config --global --auth bitbucket-oauth.bitbucket.org {{ bitbucket_consumer_key }} {{ bitbucket_consumer_secret }}"
+      when:
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+        - run_composer.stat.exists
 
     - include_tasks: testing.yml
     - include_tasks: behat.yml
@@ -198,3 +200,6 @@
         user: "{{ app_user }}"
         job: "cd {{ app_directory }} && php artisan schedule:run >> /dev/null 2>&1"
       when: (fact_laravel_version | default([], true)) | length > 0
+
+
+      debezium_companieshouse-ingestion-svc
