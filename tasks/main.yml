@@ -60,13 +60,6 @@
 - become: true
   become_user: "{{ app_user }}"
   block:
-
-    - name: Composer Install.
-      composer:
-        command: install
-        no_dev: no
-        working_dir: "{{ app_directory }}"
-      when: run_composer.stat.exists
       
     - name: Set bitbucket auth for private composer packages.
       shell: "composer config --global --auth bitbucket-oauth.bitbucket.org {{ bitbucket_consumer_key }} {{ bitbucket_consumer_secret }}"
@@ -74,6 +67,13 @@
         - bitbucket_consumer_key != ""
         - bitbucket_consumer_secret != ""
         - run_composer.stat.exists
+
+    - name: Composer Install.
+      composer:
+        command: install
+        no_dev: no
+        working_dir: "{{ app_directory }}"
+      when: run_composer.stat.exists
 
     - include_tasks: testing.yml
     - include_tasks: behat.yml
