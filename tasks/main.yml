@@ -7,6 +7,16 @@
   apt: 
     deb: "{{ app_deb_package }}"
 
+- name: Check if pnpm-lock.yaml exists
+  stat:
+    path: "{{ app_directory }}/pnpm-lock.yaml"
+  register: run_pnpm
+
+- name: Check if npm package.json exists
+  stat:
+    path: "{{ app_directory }}/package.json"
+  register: run_npm
+
 - name: Create app user.
   user:
     name: "{{ app_user }}"
@@ -40,6 +50,13 @@
 - name: Validate PHP framework
   include_tasks: validation.yml
 
+- name: Ensure pnpm is installed globally
+  npm:
+    name: pnpm
+    global: yes
+    state: present
+  when: run_pnpm.stat.exists
+
 - become: true
   become_user: "{{ app_user }}"
   block:
@@ -60,16 +77,6 @@
     - include_tasks: testing.yml
     - include_tasks: behat.yml
     - include_tasks: env.yml
-
-    - name: Check if npm package.json exists
-      stat:
-        path: "{{ app_directory }}/package.json"
-      register: run_npm
-
-    - name: Check if pnpm-lock.yaml exists
-      stat:
-        path: "{{ app_directory }}/pnpm-lock.yaml"
-      register: run_pnpm
 
     - name: Set bitbucket auth for private npm packages.
       copy:
@@ -114,13 +121,44 @@
         - bitbucket_consumer_key != ""
         - bitbucket_consumer_secret != ""
 
-    - name: pnpm install
+    - name: Get Bitbucket OAuth token
+      uri:
+        url: "https://bitbucket.org/site/oauth2/access_token"
+        method: POST
+        url_username: "{{ bitbucket_consumer_key }}"
+        url_password: "{{ bitbucket_consumer_secret }}"
+        force_basic_auth: yes
+        body: "grant_type=client_credentials"
+        body_format: form-urlencoded
+      register: bitbucket_token
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+  
+    - name: Configure git credentials for private Bitbucket repos
+      copy:
+        dest: "{{ app_directory }}/.gitconfig"
+        content: |
+          [url "https://x-token-auth:{{ bitbucket_token.json.access_token }}@bitbucket.org"]
+              insteadOf = https://bitbucket.org
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
+        - bitbucket_consumer_key != ""
+        - bitbucket_consumer_secret != ""
+      
+    - name: Run pnpm install in app dir
       command: pnpm install
       args:
         chdir: "{{ app_directory }}"
       environment:
+        GIT_CONFIG_GLOBAL: "{{ app_directory }}/.gitconfig"
         NPM_CONFIG_USERCONFIG: "{{ app_directory }}/.npmrc"
-      when: npm_install and run_pnpm.stat.exists
+      when:
+        - npm_install
+        - run_pnpm.stat.exists
 
     - name: pnpm run build
       command: pnpm run build
